@@ -6,6 +6,11 @@ from abc import abstractmethod
 import pygame as pg
 from . import constants as c
 
+SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SOURCE_DIR)
+GFX_DIR = os.path.join(ROOT_DIR, 'resources', 'graphics')
+DATA_DIR = os.path.join(SOURCE_DIR, 'data')
+
 class State():
     def __init__(self):
         self.start_time = 0.0
@@ -74,7 +79,6 @@ class Control():
             elif event.type == pg.MOUSEBUTTONDOWN:
                 self.mouse_pos = pg.mouse.get_pos()
                 self.mouse_click[0], _, self.mouse_click[1] = pg.mouse.get_pressed()
-                print('pos:', self.mouse_pos, ' mouse:', self.mouse_click)
 
     def main(self):
         while not self.done:
@@ -154,14 +158,14 @@ def load_all_gfx(directory, colorkey=c.WHITE, accept=('.png', '.jpg', '.bmp', '.
     return graphics
 
 def loadZombieImageRect():
-    file_path = os.path.join('source', 'data', 'entity', 'zombie.json')
+    file_path = os.path.join(DATA_DIR, 'entity', 'zombie.json')
     f = open(file_path)
     data = json.load(f)
     f.close()
     return data[c.ZOMBIE_IMAGE_RECT]
 
 def loadPlantImageRect():
-    file_path = os.path.join('source', 'data', 'entity', 'plant.json')
+    file_path = os.path.join(DATA_DIR, 'entity', 'plant.json')
     f = open(file_path)
     data = json.load(f)
     f.close()
@@ -171,6 +175,6 @@ pg.init()
 pg.display.set_caption(c.ORIGINAL_CAPTION)
 SCREEN = pg.display.set_mode(c.SCREEN_SIZE)
 
-GFX = load_all_gfx(os.path.join("resources","graphics"))
+GFX = load_all_gfx(GFX_DIR)
 ZOMBIE_RECT = loadZombieImageRect()
 PLANT_RECT = loadPlantImageRect()
