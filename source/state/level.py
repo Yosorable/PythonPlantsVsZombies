@@ -160,7 +160,7 @@ class Level(tool.State):
                 if self.menubar.checkMenuBarClick(mouse_pos):
                     self.removeMouseImage()
                 else:
-                    self.addPlant()
+                    self.addPlant(mouse_pos)
             elif mouse_pos is None:
                 self.setupHintImage()
         
@@ -203,14 +203,14 @@ class Level(tool.State):
         x, y = pg.mouse.get_pos()
         return self.map.showPlant(x, y)
         
-    def addPlant(self):
-        pos = self.canSeedPlant()
+    def addPlant(self, mouse_pos):
+        if mouse_pos is None:
+            return
+        pos = self.map.showPlant(mouse_pos[0], mouse_pos[1])
         if pos is None:
             return
 
-        if self.hint_image is None:
-            self.setupHintImage()
-        x, y = self.hint_rect.centerx, self.hint_rect.bottom
+        x, y = pos
         map_x, map_y = self.map.getMapIndex(x, y)
         if self.plant_name == c.SUNFLOWER:
             new_plant = plant.SunFlower(x, y, self.sun_group)
