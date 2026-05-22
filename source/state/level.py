@@ -200,7 +200,7 @@ class Level(tool.State):
             self.zombie_groups[map_y].add(zombie.NewspaperZombie(c.ZOMBIE_START_X, y, self.head_group))
 
     def canSeedPlant(self):
-        x, y = pg.mouse.get_pos()
+        x, y = tool.get_pointer_pos()
         return self.map.showPlant(x, y)
         
     def addPlant(self, mouse_pos):
@@ -272,9 +272,8 @@ class Level(tool.State):
                 pos[1] == self.hint_rect.y):
                 return
             width, height = self.mouse_rect.w, self.mouse_rect.h
-            image = pg.Surface([width, height])
+            image = pg.Surface([width, height], pg.SRCALPHA)
             image.blit(self.mouse_image, (0, 0), (0, 0, width, height))
-            image.set_colorkey(c.BLACK)
             image.set_alpha(128)
             self.hint_image = image
             self.hint_rect = image.get_rect()
@@ -518,7 +517,7 @@ class Level(tool.State):
     def drawMouseShow(self, surface):
         if self.hint_plant:
             surface.blit(self.hint_image, self.hint_rect)
-        x, y = pg.mouse.get_pos()
+        x, y = tool.get_pointer_pos()
         self.mouse_rect.centerx = x
         self.mouse_rect.centery = y
         surface.blit(self.mouse_image, self.mouse_rect)

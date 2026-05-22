@@ -11,6 +11,18 @@ ROOT_DIR = os.path.dirname(SOURCE_DIR)
 GFX_DIR = os.path.join(ROOT_DIR, 'resources', 'graphics')
 DATA_DIR = os.path.join(SOURCE_DIR, 'data')
 
+# Last known pointer position in game (800x600) coordinates. Touch (FINGER)
+# events do not move the SDL mouse, so code that needs the current pointer
+# location reads this instead of pg.mouse.get_pos().
+_pointer_pos = (0, 0)
+
+def set_pointer_pos(pos):
+    global _pointer_pos
+    _pointer_pos = pos
+
+def get_pointer_pos():
+    return _pointer_pos
+
 class State():
     def __init__(self):
         self.start_time = 0.0
@@ -77,8 +89,22 @@ class Control():
             elif event.type == pg.KEYUP:
                 self.keys = pg.key.get_pressed()
             elif event.type == pg.MOUSEBUTTONDOWN:
-                self.mouse_pos = pg.mouse.get_pos()
+                if getattr(event, 'touch', False):
+                    continue  # touch is delivered as FINGER events below; avoid double input
+                self.mouse_pos = event.pos
+                set_pointer_pos(event.pos)
                 self.mouse_click[0], _, self.mouse_click[1] = pg.mouse.get_pressed()
+            elif event.type == pg.MOUSEMOTION:
+                if not getattr(event, 'touch', False):
+                    set_pointer_pos(event.pos)
+            elif event.type == pg.FINGERDOWN:
+                pos = (int(event.x * c.SCREEN_WIDTH), int(event.y * c.SCREEN_HEIGHT))
+                self.mouse_pos = pos
+                set_pointer_pos(pos)
+                self.mouse_click[0] = True
+                self.mouse_click[1] = False
+            elif event.type == pg.FINGERMOTION:
+                set_pointer_pos((int(event.x * c.SCREEN_WIDTH), int(event.y * c.SCREEN_HEIGHT)))
 
     def main(self):
         while not self.done:
@@ -89,14 +115,19 @@ class Control():
         print('game over')
 
 def get_image(sheet, x, y, width, height, colorkey=c.BLACK, scale=1):
-        image = pg.Surface([width, height])
-        rect = image.get_rect()
-
-        image.blit(sheet, (0, 0), (x, y, width, height))
-        image.set_colorkey(colorkey)
-        image = pg.transform.scale(image,
-                                   (int(rect.width*scale),
-                                    int(rect.height*scale)))
+        # A colorkey surface that also has a per-surface alpha (set_alpha) blits
+        # as fully transparent on real SDL2 windows (macOS/iOS) — works only in
+        # the headless dummy driver. Sprites animated with set_alpha must keep a
+        # per-pixel alpha channel, so preserve SRCALPHA sources instead of
+        # flattening them onto an opaque colorkey surface.
+        if sheet.get_flags() & pg.SRCALPHA:
+            image = pg.Surface([width, height], pg.SRCALPHA)
+            image.blit(sheet, (0, 0), (x, y, width, height))
+        else:
+            image = pg.Surface([width, height])
+            image.blit(sheet, (0, 0), (x, y, width, height))
+            image.set_colorkey(colorkey)
+        image = pg.transform.scale(image, (int(width * scale), int(height * scale)))
         return image
 
 def load_image_frames(directory, image_name, colorkey, accept):
